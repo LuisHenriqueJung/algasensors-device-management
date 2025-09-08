@@ -6,9 +6,11 @@ import com.curso.algasensors.device_management.commom.IdGenerator;
 import com.curso.algasensors.device_management.domain.model.Sensor;
 import com.curso.algasensors.device_management.domain.model.SensorId;
 import com.curso.algasensors.device_management.domain.repository.SensorRepository;
+import io.hypersistence.tsid.TSID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/v1/sensors")
@@ -17,6 +19,12 @@ public class SensorsController {
 
 
     private final SensorRepository repository;
+    
+    @GetMapping("{sensorId}")
+    SensorOutput get(@PathVariable("sensorId") TSID sensorId) {
+        Sensor sensor = repository.findById(new SensorId(sensorId)).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sensor not found"));
+        return convertToOutput(sensor);
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -31,6 +39,9 @@ public class SensorsController {
                 .enabled(false)
                 .build();
         sensor = repository.saveAndFlush(sensor);
+        return convertToOutput(sensor);
+    }
+    SensorOutput convertToOutput(Sensor sensor) {
         return SensorOutput.builder()
                 .id(sensor.getId().getValue())
                 .name(sensor.getName())
