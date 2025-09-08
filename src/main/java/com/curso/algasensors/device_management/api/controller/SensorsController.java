@@ -1,5 +1,6 @@
 package com.curso.algasensors.device_management.api.controller;
 
+import com.curso.algasensors.device_management.api.config.client.SensorMonitoringClient;
 import com.curso.algasensors.device_management.api.model.SensorInput;
 import com.curso.algasensors.device_management.api.model.SensorOutput;
 import com.curso.algasensors.device_management.commom.IdGenerator;
@@ -21,11 +22,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class SensorsController {
 
     private static final String SENSOR_NOT_FOUND = "Sensor not found";
-    private static final String SENSOR_ALREADY_ENABLED = "Sensor already enabled";
     private static final String SENSOR_ALREADY_DISABLED = "Sensor already disabled";
-    private static final String SENSOR_ID = "sensorId";
 
     private final SensorRepository repository;
+
+    private final SensorMonitoringClient sensorMonitoringClient;
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
@@ -82,12 +83,12 @@ public class SensorsController {
 
     @PutMapping("{sensorId}/enable")
     @ResponseStatus(HttpStatus.OK)
-    SensorOutput enable(@PathVariable("sensorId") TSID sensorId) {
-        Sensor sensor = repository.findById(new SensorId(sensorId)).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, SENSOR_NOT_FOUND));
-        if (Boolean.TRUE.equals(sensor.getEnabled())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, SENSOR_ALREADY_ENABLED);
+    void enable(@PathVariable("sensorId") TSID sensorId) {
+        Sensor sensor = repository.findById(new SensorId(sensorId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         sensor.setEnabled(true);
-        sensor = repository.saveAndFlush(sensor);
-        return convertToOutput(sensor);
+        repository.save(sensor);
+        sensorMonitoringClient.enableMonitoring(sensorId);
     }
 
     @DeleteMapping("{sensorId}")
@@ -95,6 +96,7 @@ public class SensorsController {
     void delete(@PathVariable("sensorId") TSID sensorId) {
         Sensor sensor = repository.findById(new SensorId(sensorId)).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, SENSOR_NOT_FOUND));
         repository.deleteById(sensor.getId());
+        sensorMonitoringClient.disableMonitoring(sensorId);
     }
 
     @DeleteMapping("{sensorId}/enable")
@@ -104,5 +106,6 @@ public class SensorsController {
         if (Boolean.FALSE.equals(sensor.getEnabled())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, SENSOR_ALREADY_DISABLED);
         sensor.setEnabled(false);
         repository.saveAndFlush(sensor);
+        sensorMonitoringClient.disableMonitoring(sensorId);
     }
 }
