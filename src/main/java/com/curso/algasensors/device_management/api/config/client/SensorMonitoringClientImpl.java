@@ -1,7 +1,5 @@
-package com.curso.algasensors.device_management.api.config.client.impl;
+package com.curso.algasensors.device_management.api.config.client;
 
-import com.curso.algasensors.device_management.api.config.client.SensorMonitoringClient;
-import com.curso.algasensors.device_management.api.config.client.SensorMonitoringClientBadGatewayException;
 import io.hypersistence.tsid.TSID;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
@@ -22,7 +20,7 @@ public class SensorMonitoringClientImpl implements SensorMonitoringClient {
     @Override
     public void enableMonitoring(TSID sensorId) {
         restClient.put()
-                .uri("/api/v1/sensors/{sensorId}/monitoring/enable", sensorId)
+                .uri("/api/sensors/{sensorId}/monitoring/enable", sensorId)
                 .retrieve()
                 .toBodilessEntity();
     }
@@ -30,7 +28,7 @@ public class SensorMonitoringClientImpl implements SensorMonitoringClient {
     @Override
     public void disableMonitoring(TSID sensorId) {
         restClient.delete()
-                .uri("/api/v1/sensors/{sensorId}/monitoring/enable", sensorId)
+                .uri("/api/sensors/{sensorId}/monitoring/enable", sensorId)
                 .retrieve()
                 .toBodilessEntity();
     }
